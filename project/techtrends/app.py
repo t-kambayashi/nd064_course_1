@@ -1,4 +1,5 @@
 import sqlite3
+import logging
 
 from flask import Flask, jsonify, json, render_template, request, url_for, redirect, flash
 from werkzeug.exceptions import abort
@@ -22,11 +23,16 @@ def get_post(post_id):
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your secret key'
 
+db_connection_count = 0
+post_count = 0
+
 # Define the main route of the web application 
 @app.route('/')
 def index():
     connection = get_db_connection()
     posts = connection.execute('SELECT * FROM posts').fetchall()
+    global db_connection_count
+    db_connection_count += 1
     connection.close()
     return render_template('index.html', posts=posts)
 
@@ -35,14 +41,19 @@ def index():
 @app.route('/<int:post_id>')
 def post(post_id):
     post = get_post(post_id)
+    global post_count
+    post_count += 1
     if post is None:
+      app.logger.info(404)
       return render_template('404.html'), 404
     else:
+      app.logger.info(post)
       return render_template('post.html', post=post)
 
 # Define the About Us page
 @app.route('/about')
 def about():
+    app.logger.info('About Us')
     return render_template('about.html')
 
 # Define the post creation functionality 
@@ -61,10 +72,33 @@ def create():
             connection.commit()
             connection.close()
 
+            app.logger.info(title)
+
             return redirect(url_for('index'))
 
     return render_template('create.html')
 
+@app.route('/healthz')
+def healthz():
+    response = app.response_class(
+            response=json.dumps({"result":"OK - healthy"}),
+            status=200,
+            mimetype='application/json'
+    )
+    app.logger.info('Healthz request successfull')
+    return response
+
+@app.route('/metrics')
+def metrics():
+    response = app.response_class(
+            response=json.dumps({"db_connection_count":db_connection_count,"post_count": post_count}),
+            status=200,
+            mimetype='application/json'
+    )
+    app.logger.info('Metrics request successfull')
+    return response
+
 # start the application on port 3111
 if __name__ == "__main__":
+   logging.basicConfig(filename='app.log',level=logging.DEBUG)
    app.run(host='0.0.0.0', port='3111')
