@@ -1,0 +1,9 @@
+apiVersion: v1
+name: techtrends
+keywords:
+  - techtrends
+version: 1.0.0
+maintainers:
+  - name: tkambayashi
+    email: tatsuya.kambayashi.yk@renesas.com
+description: A Helm chart for deploying the techtrends application
