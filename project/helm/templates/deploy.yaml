@@ -14,8 +14,8 @@ spec:
         app: techtrends
     spec:
       containers:
-      - name: techtrends
-        image: tkambayashi/techtrends:latest
+      - name: tkambayashi
+        image: techtrends:latest
         ports:
         - containerPort: 3111
         resources:
